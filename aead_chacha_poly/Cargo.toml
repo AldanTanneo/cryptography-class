@@ -1,0 +1,20 @@
+[package]
+name = "aead_chacha_poly"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[[bin]]
+name = "aead_wrap"
+path = "src/wrap.rs"
+
+[[bin]]
+name = "aead_unwrap"
+path = "src/unwrap.rs"
+
+[dependencies]
+chacha20 = { path = "../chacha20" }
+poly1305 = { path = "../poly1305" }
+io-utils = { path = "../io-utils" }
+argh = { workspace = true }

@@ -1,0 +1,24 @@
+[workspace]
+members = [
+    "poly1305",
+    "chacha20",
+    "aead_chacha_poly",
+    "io-utils",
+    "shake128",
+    "x25519",
+]
+resolver = "2"
+
+[profile.release]
+lto = true
+strip = true
+
+[workspace.dependencies]
+ark-ff = { version = "0.4", features = ["asm"] }
+bytemuck = { version = "1", features = [
+    "min_const_generics",
+    "must_cast",
+    "derive",
+] }
+argh = "0.1"
+hex-literal = "0.4"
