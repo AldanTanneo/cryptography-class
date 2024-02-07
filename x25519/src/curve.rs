@@ -2,20 +2,12 @@ use core::hint::black_box;
 
 use ark_ff::{BigInteger, Field as _, PrimeField};
 
-#[allow(unused)]
-#[inline(never)]
-fn noop() {
-    // function used to insert "noop" calls into generated assembly
-    // useful to figure out where stuff is with `cargo asm`
-    core::hint::black_box(())
-}
-
 // implement the swap on pointers, not values
 fn bigint_cswap<T: PrimeField>(swap: bool, a: &mut T::BigInt, b: &mut T::BigInt) {
     let mask = black_box(swap as u64).wrapping_neg();
 
-    let mut dummy = T::ZERO.into_bigint();
-    let n = dummy.as_ref().len();
+    let mut dummy = T::BigInt::default();
+    let n = T::BigInt::NUM_LIMBS;
     for i in 0..n {
         dummy.as_mut()[i] = mask & black_box(a.as_ref()[i] ^ b.as_ref()[i]);
     }
@@ -26,18 +18,22 @@ fn bigint_cswap<T: PrimeField>(swap: bool, a: &mut T::BigInt, b: &mut T::BigInt)
     }
 }
 
-fn field_cswap<T: PrimeField>(swap: bool, a: &mut T, b: &mut T) {
-    let mut x = a.into_bigint();
-    let mut y = b.into_bigint();
+fn field_cswap<T: PrimeField>(swap: bool, a: &mut T, b: &mut T)
+where
+    T: Copy,
+    T::BigInt: Copy,
+{
+    assert_eq!(core::mem::size_of::<T>(), core::mem::size_of::<T::BigInt>());
+    assert_eq!(T::BigInt::NUM_LIMBS * 8, core::mem::size_of::<T::BigInt>());
 
-    bigint_cswap::<T>(swap, &mut x, &mut y);
+    // SAFETY: PrimeField is a wrapper around a specially handled BigInt.
+    // BigInt derefs as [u64], BigInt and Field are Copy, and we assert that BigInt
+    // and Field are the same size.
+    // Thus the state is valid after swapping the [u64] composing the int.
+    let x = unsafe { core::mem::transmute::<&mut T, &mut T::BigInt>(a) };
+    let y = unsafe { core::mem::transmute::<&mut T, &mut T::BigInt>(b) };
 
-    // SAFETY: x and y are always field elements
-    // (since they were obtained with "into_bigint")
-    unsafe {
-        *a = T::from_bigint(x).unwrap_unchecked();
-        *b = T::from_bigint(y).unwrap_unchecked();
-    }
+    bigint_cswap::<T>(swap, x, y);
 }
 
 fn cswap<T: PrimeField>(swap: bool, a: &mut (T, T), b: &mut (T, T)) {
