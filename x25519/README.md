@@ -4,9 +4,7 @@ x25519 Diffie-Hellman implementation
 
 ## Building
 
-The executable is implemented in Rust. An up-to-date Rust toolchain is needed. To compile it, run `cargo build --release` in the `x25519` folder. The executable will be located at `x25519/target/release/x25519`.
-
-Alternatively, the provided `Makefile` runs the build command.
+The executable is implemented in Rust. An up-to-date Rust toolchain is needed. To compile it, run `cargo build --release`. The executable will be located at `target/release/x25519`.
 
 Cargo will pull dependencies as specified in `Cargo.toml`, so an internet connection is required to build.
 
