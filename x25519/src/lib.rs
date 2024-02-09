@@ -21,11 +21,11 @@ impl Curve25519 {
     ];
 
     pub fn clamp_scalar(mut scalar: BigInt25519) -> BigInt25519 {
-        let slice = bytemuck::cast_slice_mut::<_, u8>(scalar.as_mut());
-
         // on big endian architectures, swap the bytes in each limb
         #[cfg(target_endian = "big")]
-        res.as_mut().iter_mut().for_each(|s| *s = s.to_le());
+        scalar.as_mut().iter_mut().for_each(|s| *s = u64::to_le(*s));
+
+        let slice = bytemuck::cast_slice_mut::<_, u8>(scalar.as_mut());
 
         slice[0] &= 248;
         slice[31] &= 127;
@@ -33,7 +33,10 @@ impl Curve25519 {
 
         // on big endian architectures, swap the bytes in each limb (again)
         #[cfg(target_endian = "big")]
-        res.as_mut().iter_mut().for_each(|s| *s = s.to_le());
+        scalar
+            .as_mut()
+            .iter_mut()
+            .for_each(|s| *s = u64::from_le(*s));
 
         scalar
     }
@@ -54,7 +57,7 @@ impl Curve25519 {
 
         // on big endian architectures, swap the bytes in each limb
         #[cfg(target_endian = "big")]
-        res.as_mut().iter_mut().for_each(|s| *s = s.to_le());
+        res.as_mut().iter_mut().for_each(|s| *s = u64::from_le(*s));
 
         res
     }
@@ -95,18 +98,21 @@ impl Curve448 {
     ];
 
     pub fn clamp_scalar(mut scalar: BigInt448) -> BigInt448 {
-        let slice = bytemuck::cast_slice_mut::<_, u8>(scalar.as_mut());
-
         // on big endian architectures, swap the bytes in each limb
         #[cfg(target_endian = "big")]
-        res.as_mut().iter_mut().for_each(|s| *s = s.to_le());
+        scalar.as_mut().iter_mut().for_each(|s| *s = u64::to_le(*s));
+
+        let slice = bytemuck::cast_slice_mut::<_, u8>(scalar.as_mut());
 
         slice[0] &= 252;
         slice[55] |= 128;
 
         // on big endian architectures, swap the bytes in each limb
         #[cfg(target_endian = "big")]
-        res.as_mut().iter_mut().for_each(|s| *s = s.to_le());
+        scalar
+            .as_mut()
+            .iter_mut()
+            .for_each(|s| *s = u64::from_le(*s));
 
         scalar
     }
@@ -126,7 +132,7 @@ impl Curve448 {
 
         // on big endian architectures, swap the bytes in each limb
         #[cfg(target_endian = "big")]
-        res.as_mut().iter_mut().for_each(|s| *s = s.to_le());
+        res.as_mut().iter_mut().for_each(|s| *s = u64::from_le(*s));
 
         res
     }
