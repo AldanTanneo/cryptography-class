@@ -75,12 +75,12 @@ pub trait ReadExt: Read {
 
 impl<T: Read> ReadExt for T {}
 
-pub fn parse_hex<const N: usize>(data: &str) -> Option<[u8; N]> {
+pub const fn parse_hex<const N: usize>(data: &str) -> Option<[u8; N]> {
     if data.len() != N * 2 {
         return None;
     }
 
-    fn hex_digit(x: u8) -> Option<u8> {
+    const fn hex_digit(x: u8) -> Option<u8> {
         Some(match x {
             b'0'..=b'9' => x - b'0',
             b'a'..=b'f' => x - b'a' + 10,
@@ -90,9 +90,30 @@ pub fn parse_hex<const N: usize>(data: &str) -> Option<[u8; N]> {
     }
 
     let mut res = [0; N];
-    for (i, byte) in data.as_bytes().chunks_exact(2).enumerate() {
-        res[i] = (hex_digit(byte[0])? * 16) | hex_digit(byte[1])?;
+    let mut i = 0;
+    while i < N {
+        let Some(d0) = hex_digit(data.as_bytes()[2 * i]) else {
+            return None;
+        };
+        let Some(d1) = hex_digit(data.as_bytes()[2 * i + 1]) else {
+            return None;
+        };
+        res[i] = (d0 * 16) | d1;
+        i += 1;
     }
 
     Some(res)
+}
+
+#[macro_export]
+macro_rules! hex {
+    ($data:literal) => {{
+        const DATA: &'static str = $data;
+        const N: usize = DATA.len();
+        const RES: [u8; N / 2] = match $crate::parse_hex::<{ N / 2 }>(DATA) {
+            Some(arr) => arr,
+            None => panic!("Invalid hex data"),
+        };
+        RES
+    }};
 }
