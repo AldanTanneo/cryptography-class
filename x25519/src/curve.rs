@@ -2,7 +2,6 @@ use core::hint::black_box;
 
 use ark_ff::{BigInteger, Field as _, PrimeField};
 
-// implement the swap on pointers, not values
 fn bigint_cswap<T: PrimeField>(swap: bool, a: &mut T::BigInt, b: &mut T::BigInt) {
     let mask = black_box(swap as u64).wrapping_neg();
 
@@ -29,7 +28,7 @@ where
     // SAFETY: PrimeField is a wrapper around a specially handled BigInt.
     // BigInt derefs as [u64], BigInt and Field are Copy, and we assert that BigInt
     // and Field are the same size.
-    // Thus the state is valid after swapping the [u64] composing the int.
+    // Thus the state is valid after swapping the [u64] composing the BigInt.
     let x = unsafe { core::mem::transmute::<&mut T, &mut T::BigInt>(a) };
     let y = unsafe { core::mem::transmute::<&mut T, &mut T::BigInt>(b) };
 
