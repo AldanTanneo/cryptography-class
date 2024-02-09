@@ -23,9 +23,9 @@ use x25519::curve::Curve;
 struct FqConfig;
 type Fq = Fp64<MontBackend<FqConfig, 1>>;
 
-struct Curve1;
+struct Curve101;
 
-impl Curve for Curve1 {
+impl Curve for Curve101 {
     type Field = Fq;
     const A: u64 = 49;
     const A24: u64 = 38;
@@ -35,24 +35,24 @@ const BASE_POINT: Fq = MontFp!("2");
 
 #[test]
 fn p2() {
-    println!("{}", Curve1::A24);
-    let kp = Curve1::ladder(BigInt!("2"), (BASE_POINT, Fq::ONE));
+    println!("{}", Curve101::A24);
+    let kp = Curve101::ladder(BigInt!("2"), (BASE_POINT, Fq::ONE));
 
     assert_eq!(kp, MontFp!("70"));
 }
 
 #[test]
 fn p3() {
-    println!("{}", Curve1::A24);
-    let kp = Curve1::ladder(BigInt!("3"), (BASE_POINT, Fq::ONE));
+    println!("{}", Curve101::A24);
+    let kp = Curve101::ladder(BigInt!("3"), (BASE_POINT, Fq::ONE));
 
     assert_eq!(kp, MontFp!("59"));
 }
 
 #[test]
 fn p77() {
-    println!("{}", Curve1::A24);
-    let kp = Curve1::ladder(BigInt!("77"), (BASE_POINT, Fq::ONE));
+    println!("{}", Curve101::A24);
+    let kp = Curve101::ladder(BigInt!("77"), (BASE_POINT, Fq::ONE));
 
     assert_eq!(kp, MontFp!("8"));
 }

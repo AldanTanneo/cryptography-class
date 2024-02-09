@@ -21,4 +21,3 @@ bytemuck = { version = "1", features = [
     "derive",
 ] }
 argh = "0.1"
-hex-literal = "0.4"

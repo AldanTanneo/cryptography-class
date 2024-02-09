@@ -336,6 +336,7 @@ name = "shake128"
 version = "0.1.0"
 dependencies = [
  "bytemuck",
+ "io-utils",
 ]
 
 [[package]]

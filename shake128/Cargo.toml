@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 bytemuck = { workspace = true }
+io-utils = { path = "../io-utils" }

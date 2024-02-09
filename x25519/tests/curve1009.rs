@@ -26,9 +26,9 @@ use x25519::curve::Curve;
 struct FqConfig;
 type Fq = Fp64<MontBackend<FqConfig, 1>>;
 
-struct Curve1;
+struct Curve1009;
 
-impl Curve for Curve1 {
+impl Curve for Curve1009 {
     type Field = Fq;
     const A: u64 = 682;
 }
@@ -37,48 +37,48 @@ const BASE_POINT: Fq = MontFp!("7");
 
 #[test]
 fn p2() {
-    println!("{}", Curve1::A24);
-    let kp = Curve1::ladder(BigInt!("2"), (BASE_POINT, Fq::ONE));
+    println!("{}", Curve1009::A24);
+    let kp = Curve1009::ladder(BigInt!("2"), (BASE_POINT, Fq::ONE));
 
     assert_eq!(kp, MontFp!("284"));
 }
 
 #[test]
 fn p3() {
-    println!("{}", Curve1::A24);
-    let kp = Curve1::ladder(BigInt!("3"), (BASE_POINT, Fq::ONE));
+    println!("{}", Curve1009::A24);
+    let kp = Curve1009::ladder(BigInt!("3"), (BASE_POINT, Fq::ONE));
 
     assert_eq!(kp, MontFp!("759"));
 }
 
 #[test]
 fn p5() {
-    println!("{}", Curve1::A24);
-    let kp = Curve1::ladder(BigInt!("5"), (BASE_POINT, Fq::ONE));
+    println!("{}", Curve1009::A24);
+    let kp = Curve1009::ladder(BigInt!("5"), (BASE_POINT, Fq::ONE));
 
     assert_eq!(kp, MontFp!("1000"));
 }
 
 #[test]
 fn p34() {
-    println!("{}", Curve1::A24);
-    let kp = Curve1::ladder(BigInt!("34"), (BASE_POINT, Fq::ONE));
+    println!("{}", Curve1009::A24);
+    let kp = Curve1009::ladder(BigInt!("34"), (BASE_POINT, Fq::ONE));
 
     assert_eq!(kp, MontFp!("286"));
 }
 
 #[test]
 fn p104() {
-    println!("{}", Curve1::A24);
-    let kp = Curve1::ladder(BigInt!("104"), (BASE_POINT, Fq::ONE));
+    println!("{}", Curve1009::A24);
+    let kp = Curve1009::ladder(BigInt!("104"), (BASE_POINT, Fq::ONE));
 
     assert_eq!(kp, MontFp!("810"));
 }
 
 #[test]
 fn p947() {
-    println!("{}", Curve1::A24);
-    let kp = Curve1::ladder(BigInt!("947"), (BASE_POINT, Fq::ONE));
+    println!("{}", Curve1009::A24);
+    let kp = Curve1009::ladder(BigInt!("947"), (BASE_POINT, Fq::ONE));
 
     assert_eq!(kp, MontFp!("755"));
 }
