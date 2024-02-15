@@ -1,6 +1,5 @@
 use ark_ff::{BigInteger, Field, Fp192, MontBackend, MontConfig, PrimeField};
-use io_utils::ReadExt;
-// use ruint::{aliases::U256 as u256, uint};
+use io_utils::{parse_hex, ReadExt};
 use std::io::{self, Read};
 
 #[derive(MontConfig)]
@@ -41,11 +40,11 @@ pub fn poly1305(mut data: impl Read, key: &[u8; 32]) -> io::Result<u128> {
 }
 
 pub fn parse_key(arg: &str) -> Result<[u8; 32], String> {
-    io_utils::parse_hex::<32>(arg).ok_or_else(|| "expected 32-bytes hex string".into())
+    parse_hex::<32>(arg).ok_or_else(|| "expected 32-bytes hex string".into())
 }
 
 pub fn parse_tag(arg: &str) -> Result<u128, String> {
-    io_utils::parse_hex::<16>(arg)
+    parse_hex::<16>(arg)
         .map(u128::from_le_bytes)
         .ok_or_else(|| "expected 16-bytes hex string".into())
 }
@@ -55,8 +54,7 @@ pub fn parse_tag(arg: &str) -> Result<u128, String> {
 fn poly1305_tag() {
     const TEXT: &[u8] = b"Cryptographic Forum Research Group";
 
-    let key =
-        parse_key("85d6be7857556d337f4452fe42d506a80103808afb0db2fd4abff6af4149f51b").unwrap();
+    let key = io_utils::hex!("85d6be7857556d337f4452fe42d506a80103808afb0db2fd4abff6af4149f51b");
     let tag = parse_tag("a8061dc1305136c6c22b8baf0c0127a9").unwrap();
 
     let computed_tag = poly1305(TEXT, &key).unwrap();
