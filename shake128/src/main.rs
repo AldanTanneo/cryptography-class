@@ -1,4 +1,6 @@
-use std::io::{stdin, BufReader, Read};
+use std::io::stdin;
+
+use shake128::shake128;
 
 fn main() {
     let Some(num_bytes) = std::env::args()
@@ -9,9 +11,9 @@ fn main() {
         std::process::exit(1)
     };
 
-    let stdin = BufReader::new(stdin().lock()).bytes().map_while(Result::ok);
+    let hash = shake128(stdin().lock()).expect("Could not read data from stdin");
 
-    for output in shake128::shake128(stdin).take(num_bytes) {
+    for output in hash.take(num_bytes) {
         print!("{output:02x}");
     }
     println!()

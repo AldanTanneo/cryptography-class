@@ -1,6 +1,11 @@
-use std::ops::{Deref, DerefMut};
+use std::{
+    io::{self, Read},
+    marker::PhantomData,
+    ops::{Deref, DerefMut},
+};
 
 use bytemuck::{Pod, Zeroable};
+use io_utils::ReadExt;
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq, Pod, Zeroable)]
@@ -175,19 +180,39 @@ pub trait KeccakFlavour {
     const SUFFIX: Suffix;
 }
 
-// using iterators allows us to fetch bytes as-needed, and not load the entire data range in memory
-pub fn keccak<F: KeccakFlavour>(mut msg: impl Iterator<Item = u8>) -> impl Iterator<Item = u8> {
-    // bypass Rust's const generics limitations
-    // by using a trait to compute R from C
-    trait Rate: KeccakFlavour {
-        const R: usize = {
-            assert!(Self::CAPACITY < 1600 && Self::CAPACITY % 8 == 0);
-            (1600 - Self::CAPACITY) / 8
-        };
+// bypass Rust's const generics limitations
+// by using a trait to compute R from C
+trait Rate: KeccakFlavour {
+    const R: usize = {
+        assert!(Self::CAPACITY < 1600 && Self::CAPACITY % 8 == 0);
+        (1600 - Self::CAPACITY) / 8
+    };
+}
+
+impl<T: KeccakFlavour> Rate for T {}
+
+pub struct Hasher<F: KeccakFlavour> {
+    current: usize,
+    data: [u8; 200],
+    #[doc(hidden)]
+    flavour: PhantomData<F>,
+}
+
+impl<F: KeccakFlavour> Read for Hasher<F> {
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        if self.current >= F::R {
+            keccak_p(&mut self.data);
+            self.current = 0;
+        }
+        // a read from a slice can never fail
+        let r = (&self.data[self.current..F::R]).read(buf).unwrap();
+        self.current += r;
+        Ok(r)
     }
+}
 
-    impl<T: KeccakFlavour> Rate for T {}
-
+// using iterators allows us to fetch bytes as-needed, and not load the entire data range in memory
+pub fn keccak<F: KeccakFlavour>(mut msg: impl Read) -> io::Result<impl Iterator<Item = u8>> {
     // ensure our 'data' array is correctly aligned
     // so that we can safely cast it to State
     #[repr(align(8))]
@@ -211,11 +236,9 @@ pub fn keccak<F: KeccakFlavour>(mut msg: impl Iterator<Item = u8>) -> impl Itera
     // absorption
 
     loop {
-        let n = data[..F::R]
-            .iter_mut()
-            .zip(msg.by_ref())
-            .map(|(s, p)| *s ^= p)
-            .count();
+        let mut buf = [0; 200];
+        let n = msg.read_all(&mut buf[..F::R])?;
+        data.iter_mut().zip(&buf[..F::R]).for_each(|(s, p)| *s ^= p);
 
         assert!(n <= F::R);
 
@@ -234,7 +257,7 @@ pub fn keccak<F: KeccakFlavour>(mut msg: impl Iterator<Item = u8>) -> impl Itera
 
     let mut current = 0;
 
-    std::iter::repeat_with(move || {
+    Ok(std::iter::repeat_with(move || {
         if current < F::R {
             let byte = data[current];
             current += 1;
@@ -245,7 +268,7 @@ pub fn keccak<F: KeccakFlavour>(mut msg: impl Iterator<Item = u8>) -> impl Itera
             current = 1;
             byte
         }
-    })
+    }))
 }
 
 // Keccak Flavour for extendable output functions
@@ -256,11 +279,11 @@ impl<const SIZE: usize> KeccakFlavour for Shake<SIZE> {
     const SUFFIX: Suffix = Suffix::S1111;
 }
 
-pub fn shake128(msg: impl Iterator<Item = u8>) -> impl Iterator<Item = u8> {
+pub fn shake128(msg: impl Read) -> io::Result<impl Iterator<Item = u8>> {
     keccak::<Shake<128>>(msg)
 }
 
-pub fn shake256(msg: impl Iterator<Item = u8>) -> impl Iterator<Item = u8> {
+pub fn shake256(msg: impl Read) -> io::Result<impl Iterator<Item = u8>> {
     keccak::<Shake<256>>(msg)
 }
 
@@ -272,22 +295,22 @@ impl<const SIZE: usize> KeccakFlavour for Sha3<SIZE> {
     const SUFFIX: Suffix = Suffix::S01;
 }
 
-fn sha3<const SIZE: usize>(msg: impl Iterator<Item = u8>) -> Vec<u8> {
-    keccak::<Sha3<SIZE>>(msg).take(SIZE / 8).collect()
+fn sha3<const SIZE: usize>(msg: impl Read) -> io::Result<Vec<u8>> {
+    keccak::<Sha3<SIZE>>(msg).map(|hash| hash.take(SIZE / 8).collect())
 }
 
-pub fn sha3_224(msg: impl Iterator<Item = u8>) -> Vec<u8> {
+pub fn sha3_224(msg: impl Read) -> io::Result<Vec<u8>> {
     sha3::<224>(msg)
 }
 
-pub fn sha3_256(msg: impl Iterator<Item = u8>) -> Vec<u8> {
+pub fn sha3_256(msg: impl Read) -> io::Result<Vec<u8>> {
     sha3::<256>(msg)
 }
 
-pub fn sha3_384(msg: impl Iterator<Item = u8>) -> Vec<u8> {
+pub fn sha3_384(msg: impl Read) -> io::Result<Vec<u8>> {
     sha3::<384>(msg)
 }
 
-pub fn sha3_512(msg: impl Iterator<Item = u8>) -> Vec<u8> {
+pub fn sha3_512(msg: impl Read) -> io::Result<Vec<u8>> {
     sha3::<512>(msg)
 }
