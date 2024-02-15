@@ -1,4 +1,7 @@
-use std::io::{self, Read, Write};
+use std::{
+    fmt::{Debug, Display},
+    io::{self, Read, Write},
+};
 
 /// Duplicates the output of a reader and pipes it in a writer.
 ///
@@ -116,4 +119,31 @@ macro_rules! hex {
         };
         RES
     }};
+}
+
+pub fn hexfmt<'a>(digest: &'a impl AsRef<[u8]>) -> impl Display + Debug + 'a {
+    struct Digest<'a>(&'a [u8]);
+
+    impl Digest<'_> {
+        fn inner_fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            for byte in self.0.as_ref() {
+                write!(f, "{byte:02x}")?;
+            }
+            Ok(())
+        }
+    }
+
+    impl Display for Digest<'_> {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            Digest::inner_fmt(self, f)
+        }
+    }
+
+    impl Debug for Digest<'_> {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            Digest::inner_fmt(self, f)
+        }
+    }
+
+    Digest(digest.as_ref())
 }
