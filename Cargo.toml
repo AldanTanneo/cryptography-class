@@ -6,12 +6,19 @@ members = [
     "io-utils",
     "shake128",
     "x25519",
+    "ed25519",
 ]
 resolver = "2"
 
 [profile.release]
 lto = true
 strip = true
+
+[profile.flamegraph]
+inherits = "release"
+debug = true
+lto = true
+strip = false
 
 [workspace.dependencies]
 ark-ff = { version = "0.4", features = ["asm"] }
@@ -21,3 +28,4 @@ bytemuck = { version = "1", features = [
     "derive",
 ] }
 argh = "0.1"
+rand = "0.8"

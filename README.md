@@ -10,3 +10,4 @@ Repository for class assignments.
 - Week 2: Poly1305
 - Week 3: ChaCha20, ChaCha/Poly AEAD
 - Week 4: x25519
+- Week 5: Ed25519
