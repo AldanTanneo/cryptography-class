@@ -98,22 +98,64 @@ pub trait Curve {
         (x2p, z2p)
     }
 
-    fn ladder(
-        k: <Self::Field as PrimeField>::BigInt,
+    fn full_ladder(
+        k: impl AsRef<[u64]>,
         p: (Self::Field, Self::Field),
-    ) -> Self::Field {
+    ) -> [(Self::Field, Self::Field); 2] {
         let mut x0 = (Self::Field::ONE, Self::Field::ZERO);
         let mut x1 = p;
 
         let mut ki1 = false;
-        for i in (0..Self::TOTAL_BITS).rev() {
-            let ki = k.get_bit(i);
+
+        for ki in ark_ff::BitIteratorBE::new(k) {
             cswap(ki1 ^ ki, &mut x0, &mut x1);
             ki1 = ki;
 
             (x0, x1) = (Self::xdbl(x0), Self::xadd(x0, x1, p));
         }
         cswap(ki1, &mut x0, &mut x1);
+        [x0, x1]
+    }
+
+    fn ladder(
+        k: <Self::Field as PrimeField>::BigInt,
+        p: (Self::Field, Self::Field),
+    ) -> Self::Field {
+        let [x0, _] = Self::full_ladder(k, p);
         x0.0 / x0.1
+    }
+
+    fn recover_y_coordinate(
+        (x_p, y_p): (Self::Field, Self::Field),
+        (x_q, z_q): (Self::Field, Self::Field),
+        (x_pq, z_pq): (Self::Field, Self::Field),
+    ) -> (Self::Field, Self::Field) {
+        let v1 = x_p * z_q;
+        let v2 = x_q + v1;
+        let mut v3 = x_q - v1;
+
+        v3.square_in_place();
+        v3 *= x_pq;
+
+        let v1 = Self::Field::from(Self::A * 2) * z_q;
+
+        let v2 = v2 + v1;
+        let v4 = x_p * x_q;
+        let v4 = v4 + z_q;
+        let v2 = v2 * v4;
+        let v1 = v1 * z_q;
+        let v2 = v2 - v1;
+        let v2 = v2 * z_pq;
+
+        let y = v2 - v3;
+
+        let v1 = y_p.double(); // B = 1
+        let v1 = v1 * z_q;
+        let v1 = v1 * z_pq;
+
+        let x = v1 * x_q;
+        let z = v1 * z_q;
+
+        (x / z, y / z)
     }
 }
