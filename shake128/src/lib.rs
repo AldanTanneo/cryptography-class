@@ -1,11 +1,29 @@
 use std::{
     io::{self, Read},
-    marker::PhantomData,
     ops::{Deref, DerefMut},
 };
 
 use bytemuck::{Pod, Zeroable};
 use io_utils::ReadExt;
+
+// ensure our 'data' array is correctly aligned
+// so that we can safely cast it to State
+#[repr(align(8), C)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Pod, Zeroable)]
+pub struct AlignedData(pub [u8; 200]);
+
+impl Deref for AlignedData {
+    type Target = [u8; 200];
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for AlignedData {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq, Pod, Zeroable)]
@@ -22,14 +40,14 @@ impl From<[[u64; 5]; 5]> for State {
 impl From<[u8; 200]> for State {
     fn from(value: [u8; 200]) -> Self {
         State {
-            data: bytemuck::cast(value),
+            data: bytemuck::must_cast(value),
         }
     }
 }
 
 impl From<State> for [u8; 200] {
     fn from(value: State) -> Self {
-        bytemuck::cast(value.data)
+        bytemuck::must_cast(value.data)
     }
 }
 
@@ -151,8 +169,8 @@ pub fn round(state: &mut State, index: usize) {
 
 // will panic if data is not aligned to 8
 // (required to cast &mut [u8; 200] to &mut State)
-pub fn keccak_p(data: &mut [u8; 200]) {
-    let state = bytemuck::cast_mut(data);
+pub fn keccak_p(data: &mut AlignedData) {
+    let state = bytemuck::must_cast_mut(data);
 
     for index in 0..24 {
         round(state, index);
@@ -191,46 +209,9 @@ trait Rate: KeccakFlavour {
 
 impl<T: KeccakFlavour> Rate for T {}
 
-pub struct Hasher<F: KeccakFlavour> {
-    current: usize,
-    data: [u8; 200],
-    #[doc(hidden)]
-    flavour: PhantomData<F>,
-}
-
-impl<F: KeccakFlavour> Read for Hasher<F> {
-    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        if self.current >= F::R {
-            keccak_p(&mut self.data);
-            self.current = 0;
-        }
-        // a read from a slice can never fail
-        let r = (&self.data[self.current..F::R]).read(buf).unwrap();
-        self.current += r;
-        Ok(r)
-    }
-}
-
-// using iterators allows us to fetch bytes as-needed, and not load the entire data range in memory
+// using readers/iterators allows us to fetch bytes as-needed,
+// and not load the entire data range in memory
 pub fn keccak<F: KeccakFlavour>(mut msg: impl Read) -> io::Result<impl Iterator<Item = u8>> {
-    // ensure our 'data' array is correctly aligned
-    // so that we can safely cast it to State
-    #[repr(align(8))]
-    struct AlignedData([u8; 200]);
-
-    impl Deref for AlignedData {
-        type Target = [u8; 200];
-        fn deref(&self) -> &Self::Target {
-            &self.0
-        }
-    }
-
-    impl DerefMut for AlignedData {
-        fn deref_mut(&mut self) -> &mut Self::Target {
-            &mut self.0
-        }
-    }
-
     let mut data = AlignedData([0; 200]);
 
     // absorption

@@ -363,24 +363,6 @@ fn after_round() {
 
 #[test]
 fn after_keccak_p() {
-    // ensure our 'data' array is correctly aligned
-    // so that we can safely cast it to State
-    #[repr(align(8))]
-    struct AlignedData([u8; 200]);
-
-    impl std::ops::Deref for AlignedData {
-        type Target = [u8; 200];
-        fn deref(&self) -> &Self::Target {
-            &self.0
-        }
-    }
-
-    impl std::ops::DerefMut for AlignedData {
-        fn deref_mut(&mut self) -> &mut Self::Target {
-            &mut self.0
-        }
-    }
-
     let after = [
         0xE7, 0xDD, 0xE1, 0x40, 0x79, 0x8F, 0x25, 0xF1, 0x8A, 0x47, 0xC0, 0x33, 0xF9, 0xCC, 0xD5,
         0x84, 0xEE, 0xA9, 0x5A, 0xA6, 0x1E, 0x26, 0x98, 0xD5, 0x4D, 0x49, 0x80, 0x6F, 0x30, 0x47,
