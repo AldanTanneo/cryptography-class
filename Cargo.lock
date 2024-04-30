@@ -167,6 +167,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "crypto-bigint"
+version = "0.5.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0dc92fb57ca44df6db8059111ab3af99a63d5d0f8375d9972e319a379c6bab76"
+dependencies = [
+ "rand_core",
+ "subtle",
+]
+
+[[package]]
 name = "crypto-common"
 version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -250,6 +260,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "kem"
+version = "0.1.0"
+dependencies = [
+ "argh",
+ "chacha20",
+ "io-utils",
+ "rand",
+ "shake128",
+ "x25519",
+]
+
+[[package]]
 name = "libc"
 version = "0.2.153"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -296,7 +318,7 @@ name = "poly1305"
 version = "0.1.0"
 dependencies = [
  "argh",
- "ark-ff",
+ "crypto-bigint",
  "io-utils",
 ]
 
@@ -409,6 +431,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "subtle"
+version = "2.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "81cdd64d312baedb58e21336b31bc043b77e01cc99033ce76ef539f78e965ebc"
+
+[[package]]
 name = "syn"
 version = "1.0.109"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -461,6 +489,7 @@ dependencies = [
  "argh",
  "ark-ff",
  "bytemuck",
+ "crypto-bigint",
  "io-utils",
 ]
 

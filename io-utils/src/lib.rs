@@ -1,6 +1,6 @@
 use std::{
-    fmt::{Debug, Display},
-    io::{self, Read, Write},
+    fmt::{Binary, Debug, Display},
+    io::{self, ErrorKind, Read, Write},
 };
 
 /// Duplicates the output of a reader and pipes it in a writer.
@@ -25,14 +25,16 @@ pub trait ReadExt: Read {
     /// This method will continuously call [`read`] until the buffer is filled,
     /// or there is no more data to be [`read`]. This method will not
     /// return until the entire buffer has been successfully [`read`], EOF is
-    /// reached or an an error occurs.
+    /// reached or an an error other than [`ErrorKind::Interrupted`] occurs.
     ///
     /// If the buffer is empty, this will never call [`read`].
     ///
     /// # Errors
-    /// This function will return the first error that [`read`] returns.
+    /// This function will return the first error other than
+    /// [`ErrorKind::Interrupted`] that [`read`] returns.
     ///
     /// [`read`]: std::io::Read::read
+    /// [`ErrorKind::Interrupted`]: std::io::ErrorKind::Interrupted
     fn read_all(&mut self, mut buf: &mut [u8]) -> io::Result<usize> {
         let mut read = 0;
 
@@ -43,6 +45,7 @@ pub trait ReadExt: Read {
                     read += n;
                     buf = &mut buf[n..];
                 }
+                Err(e) if e.kind() == ErrorKind::Interrupted => continue,
                 Err(e) => return Err(e),
             };
         }
@@ -121,13 +124,22 @@ macro_rules! hex {
     }};
 }
 
-pub fn hexfmt<'a>(digest: &'a impl AsRef<[u8]>) -> impl Display + Debug + 'a {
+pub fn hexfmt(digest: &impl AsRef<[u8]>) -> impl Display + Debug + '_ {
     struct Digest<'a>(&'a [u8]);
 
     impl Digest<'_> {
         fn inner_fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            for byte in self.0.as_ref() {
+            for byte in self.0 {
                 write!(f, "{byte:02x}")?;
+            }
+            Ok(())
+        }
+    }
+
+    impl Binary for Digest<'_> {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            for byte in self.0 {
+                write!(f, "{byte:08b}")?;
             }
             Ok(())
         }

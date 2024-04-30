@@ -1,6 +1,6 @@
 use core::hint::black_box;
 
-use ark_ff::{BigInteger, Field as _, PrimeField};
+use ark_ff::{BigInteger, BitIteratorBE, Field as _, PrimeField};
 
 fn bigint_cswap<T: PrimeField>(swap: bool, a: &mut T::BigInt, b: &mut T::BigInt) {
     let mask = black_box(swap as u64).wrapping_neg();
@@ -107,7 +107,7 @@ pub trait Curve {
 
         let mut ki1 = false;
 
-        for ki in ark_ff::BitIteratorBE::new(k) {
+        for ki in BitIteratorBE::new(k) {
             cswap(ki1 ^ ki, &mut x0, &mut x1);
             ki1 = ki;
 

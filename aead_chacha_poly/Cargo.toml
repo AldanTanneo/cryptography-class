@@ -15,6 +15,6 @@ path = "src/unwrap.rs"
 
 [dependencies]
 chacha20 = { path = "../chacha20" }
-poly1305 = { path = "../poly1305" }
 io-utils = { path = "../io-utils" }
+poly1305 = { path = "../poly1305" }
 argh = { workspace = true }

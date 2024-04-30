@@ -11,7 +11,7 @@ use ed25519::Keys;
 #[derive(FromArgs)]
 struct Opts {
     /// key file prefix. The executable expects to find the files
-    /// <prefix>.pk and <prefix>.sk, containing the public and private keys.
+    /// prefix.pk and prefix.sk, containing the public and private keys.
     #[argh(positional)]
     prefix: String,
     /// data file to sign.

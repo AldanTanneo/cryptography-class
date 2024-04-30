@@ -6,9 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ark-ff = { workspace = true }
+io-utils = { path = "../io-utils" }
 x25519 = { path = "../x25519" }
+ark-ff = { workspace = true }
 argh = { workspace = true }
 rand = { workspace = true }
-sha2 = "0.10"
-io-utils = { path = "../io-utils" }
+sha2 = { workspace = true }

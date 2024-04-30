@@ -6,7 +6,7 @@ use rand::{rngs::StdRng, SeedableRng};
 struct Opts {
     /// key files prefix
     ///
-    /// The generated files are <prefix>.pk, <prefix>.sk
+    /// The generated files are prefix.pk, prefix.sk
     #[argh(positional)]
     prefix: String,
 }

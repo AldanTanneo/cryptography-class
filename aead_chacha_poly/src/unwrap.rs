@@ -2,8 +2,9 @@ use argh::FromArgs;
 use chacha20::u96;
 use std::{
     fs::File,
-    io::{stdout, BufReader, BufWriter, Read, Write},
+    io::{stdout, BufReader, BufWriter, Read, Seek, SeekFrom, Write},
     path::PathBuf,
+    process::ExitCode,
 };
 
 fn parse_tag(data: &str) -> Result<u128, String> {
@@ -12,7 +13,7 @@ fn parse_tag(data: &str) -> Result<u128, String> {
         .ok_or_else(|| "Invalid tag, must be a 16 bytes hex number".to_string())
 }
 
-/// Wrap data in the ChaCha/Poly AEAD scheme. Outputs the tag to stdout.
+/// Unwrap data in the ChaCha/Poly AEAD scheme. Outputs the plaintext.
 #[derive(FromArgs)]
 struct Opts {
     /// chacha20 key location
@@ -35,7 +36,7 @@ struct Opts {
     plaintext: Option<PathBuf>,
 }
 
-fn main() {
+fn main() -> ExitCode {
     let opts: Opts = argh::from_env();
 
     let mut keyfile = File::open(opts.keyfile).expect("Could not open key file");
@@ -51,27 +52,28 @@ fn main() {
     let aad = File::open(opts.adfile).expect("Could not open additional data file");
     let aad = BufReader::new(aad);
 
-    let ciphertext = File::open(&opts.ciphertext).expect("Could not open plaintext file");
-    let ciphertext = BufReader::new(ciphertext);
+    let mut ciphertext = File::open(&opts.ciphertext).expect("Could not open plaintext file");
 
-    let tag = aead_chacha_poly::check_tag(&key, opts.nonce, aad, ciphertext).expect("IO error");
+    let tag = aead_chacha_poly::check_tag(&key, opts.nonce, aad, BufReader::new(&mut ciphertext))
+        .expect("IO error");
 
-    if tag == opts.tag {
-        let output: Box<dyn Write> = match opts.plaintext.as_deref() {
-            None => Box::new(stdout().lock()),
-            Some(path) => Box::new(File::create(path).expect("Could not create output file")),
-        };
-        let mut output = BufWriter::new(output);
-
-        // reopen ciphertext (we consumed it! that's the issue with streaming data)
-        // and besides we didn't want to output it while we weren't sure that it was authenticated
-        let ciphertext = File::open(opts.ciphertext).expect("Could not open plaintext file");
-        let ciphertext = BufReader::new(ciphertext);
-
-        let mut decipher = chacha20::cipher(&key, opts.nonce, ciphertext);
-        std::io::copy(&mut decipher, &mut output).expect("Could not copy plaintext to output");
-    } else {
-        drop(keyfile);
-        std::process::exit(1);
+    if tag != opts.tag {
+        return ExitCode::FAILURE;
     }
+
+    // restart ciphertext
+    ciphertext
+        .seek(SeekFrom::Start(0))
+        .expect("Could not seek to start of cipher file");
+    // output file or stdout
+    let output: Box<dyn Write> = match opts.plaintext.as_deref() {
+        None => Box::new(stdout().lock()),
+        Some(path) => Box::new(File::create(path).expect("Could not create output file")),
+    };
+    let mut output = BufWriter::new(output);
+
+    let mut decipher = chacha20::cipher(&key, opts.nonce, BufReader::new(ciphertext));
+    std::io::copy(&mut decipher, &mut output).expect("Could not copy plaintext to output");
+
+    ExitCode::SUCCESS
 }

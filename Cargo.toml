@@ -4,6 +4,7 @@ members = [
     "chacha20",
     "aead_chacha_poly",
     "io-utils",
+    "kem",
     "shake128",
     "x25519",
     "ed25519",
@@ -21,11 +22,13 @@ lto = true
 strip = false
 
 [workspace.dependencies]
+argh = "0.1"
 ark-ff = { version = "0.4", features = ["asm"] }
 bytemuck = { version = "1", features = [
     "min_const_generics",
     "must_cast",
     "derive",
 ] }
-argh = "0.1"
 rand = "0.8"
+sha2 = "0.10"
+crypto-bigint = "0.5"

@@ -1,5 +1,6 @@
 use argh::FromArgs;
 use chacha20::u96;
+use io_utils::hexfmt;
 use std::{
     fs::File,
     io::{stdin, BufReader, BufWriter, Read},
@@ -54,8 +55,5 @@ fn main() {
     let tag =
         aead_chacha_poly::compute_tag(&key, opts.nonce, aad, plaintext, output).expect("IO error");
 
-    for byte in tag.to_le_bytes() {
-        print!("{:02x}", byte);
-    }
-    println!()
+    println!("{}", hexfmt(&tag.to_le_bytes()));
 }

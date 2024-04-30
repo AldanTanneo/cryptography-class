@@ -6,7 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ark-ff = { workspace = true }
 io-utils = { path = "../io-utils" }
-bytemuck = { workspace = true }
 argh = { workspace = true }
+ark-ff = { workspace = true }
+bytemuck = { workspace = true }
+crypto-bigint = { workspace = true }
