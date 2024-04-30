@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 use argh::FromArgs;
 
-/// check poly1305 tags
+/// Check Poly1305 tags
 #[derive(FromArgs)]
 pub struct Opts {
     /// a 64 character hexadecimal string

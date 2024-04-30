@@ -1,12 +1,14 @@
-use ark_ff::{BigInteger, Field, Fp192, MontBackend, MontConfig, PrimeField};
+use crypto_bigint::{impl_modulus, modular::constant_mod::Residue, Encoding, U192};
 use io_utils::{parse_hex, ReadExt};
 use std::io::{self, Read};
 
-#[derive(MontConfig)]
-#[modulus = "1361129467683753853853498429727072845819"]
-#[generator = "2"]
-struct Field1305Config;
-type Fp = Fp192<MontBackend<Field1305Config, 3>>;
+impl_modulus!(
+    P1305,
+    U192,
+    "0000000000000003fffffffffffffffffffffffffffffffb"
+);
+
+type Fp = Residue<P1305, 3>;
 
 fn clamp(r: u128) -> u128 {
     const MASK: u128 = 0xFFFFFFC0FFFFFFC0FFFFFFC0FFFFFFF;
@@ -18,24 +20,24 @@ pub fn poly1305(mut data: impl Read, key: &[u8; 32]) -> io::Result<u128> {
     let s = u128::from_le_bytes(key[16..].try_into().unwrap());
 
     let r = clamp(r);
-    let r = Fp::from(r);
+    let r = Fp::new(&U192::from(r));
 
     let mut acc = Fp::ZERO;
     let mut buf;
 
     loop {
-        buf = [0; 17];
+        buf = [0; 24];
         let x = data.read_all(&mut buf[..16])?;
         if x == 0 {
             break;
         }
         buf[x] = 1;
-        let n = Fp::from_le_bytes_mod_order(&buf);
+        let n = Fp::new(&U192::from_le_bytes(buf));
         acc = (acc + n) * r;
     }
-    acc += Fp::from(s);
+    acc += Fp::new(&U192::from(s));
 
-    let bytes = acc.into_bigint().to_bytes_le()[..16].try_into().unwrap();
+    let bytes = acc.retrieve().to_le_bytes()[..16].try_into().unwrap();
     Ok(u128::from_le_bytes(bytes))
 }
 

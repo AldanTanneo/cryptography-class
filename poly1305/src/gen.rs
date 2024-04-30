@@ -2,7 +2,7 @@ use std::{fs::File, io::BufReader, path::PathBuf};
 
 use argh::FromArgs;
 
-/// Generate poly1305 tags
+/// Generate Poly1305 tags
 #[derive(FromArgs)]
 pub struct Opts {
     /// a 64 character hexadecimal string

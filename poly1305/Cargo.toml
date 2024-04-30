@@ -14,6 +14,6 @@ name = "poly1305-check"
 path = "src/check.rs"
 
 [dependencies]
-argh = { workspace = true }
-ark-ff = { workspace = true }
 io-utils = { path = "../io-utils" }
+argh = { workspace = true }
+crypto-bigint = { workspace = true }
