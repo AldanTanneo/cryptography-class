@@ -2,7 +2,7 @@
 
 Cybersecurity track, Master of computer science at IP Paris.
 
-Repository for class assignments.
+Repository for class code assignments.
 
 ## Contents
 
@@ -11,3 +11,4 @@ Repository for class assignments.
 - Week 3: ChaCha20, ChaCha/Poly AEAD
 - Week 4: x25519
 - Week 5: Ed25519
+- Week 8-9: KEM
